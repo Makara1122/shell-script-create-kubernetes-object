@@ -1,4 +1,4 @@
-@Library('my-shared-library-makara') _
+@Library('my-share-library-makara') _
 
 pipeline {
     agent any
