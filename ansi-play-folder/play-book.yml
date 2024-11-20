@@ -1,0 +1,8 @@
+---
+- name: Deploy Next.js on Kubernetes
+  hosts: myhosts
+  become: true
+
+  roles:
+    - deploy-nextjs
+

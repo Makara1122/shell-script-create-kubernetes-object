@@ -1,0 +1,52 @@
+- name: Deploy Next.js application
+  hosts: webservers
+  become: true
+  vars:
+    repo_url: "https://github.com/Makara1122/jenkin-next.git"
+    target_dir: "/var/www/jenkin-next"
+
+  tasks:
+    - name: Ensure target directory exists
+      file:
+        path: "{{ target_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Check if repository already exists
+      stat:
+        path: "{{ target_dir }}/.git"
+      register: repo_exists
+
+    - name: Clone the Next.js application repository if it does not exist
+      git:
+        repo: "{{ repo_url }}"
+        dest: "{{ target_dir }}"
+        update: yes
+      when: not repo_exists.stat.exists
+      register: git_clone_result
+
+    - name: Display success message for cloning the repository
+      debug:
+        msg: "Cloned the repository successfully."
+      when: git_clone_result.changed | default(false)
+
+    - name: Display message if repository is already up-to-date or exists
+      debug:
+        msg: "Repository already exists or is up-to-date."
+      when: repo_exists.stat.exists or (not git_clone_result.changed | default(false))
+
+    - name: Install dependencies
+      command: "npm install"
+      args:
+        chdir: "{{ target_dir }}"
+
+    - name: Build the Next.js application
+      command: "npm run build"
+      args:
+        chdir: "{{ target_dir }}"
+
+    - name: Start the Next.js application
+      command: "npm start -- -p 3009"
+      args:
+        chdir: "{{ target_dir }}"
+

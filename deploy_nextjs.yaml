@@ -1,0 +1,46 @@
+---
+- name: Deploy Next.js App
+  hosts: webservers
+  tasks:
+    - name: Remove existing Node.js and npm (if any)
+      apt:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - nodejs
+        - npm
+      ignore_errors: true
+
+    - name: Autoremove unnecessary packages
+      apt:
+        autoremove: yes
+      ignore_errors: true
+
+    - name: Update package list
+      apt:
+        update_cache: yes
+
+    - name: Add NodeSource repository for Node.js 16.x
+      shell: curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
+      args:
+        creates: /etc/apt/sources.list.d/nodesource.list
+
+    - name: Install Node.js (includes npm)
+      apt:
+        name: nodejs
+        state: present
+
+    - name: Verify Node.js installation
+      command: node -v
+      register: node_version
+    - debug:
+        msg: "Node.js version installed: {{ node_version.stdout }}"
+
+    - name: Verify npm installation
+      command: npm -v
+      register: npm_version
+    - debug:
+        msg: "npm version installed: {{ npm_version.stdout }}"
+
+    # ... (continue with other tasks, like creating directories, copying files, and starting the app)
+

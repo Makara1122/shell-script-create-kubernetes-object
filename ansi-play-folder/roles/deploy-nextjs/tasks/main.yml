@@ -1,0 +1,55 @@
+---
+- name: Install dependencies for Kubernetes (if not already installed)
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - kubectl
+    - curl
+- name: Ensure Python kubernetes library is installed
+  pip:
+    name: kubernetes
+    executable: pip3
+- name: Ensure pip is installed
+  apt:
+    name: python3-pip
+    state: present
+
+- name: Debug kubectl contexts
+  shell: |
+    export KUBECONFIG=/home/minikubeuser/.kube/config
+    kubectl config get-contexts
+  args:
+    executable: /bin/bash
+  register: kubectl_contexts
+
+- name: Show available kubectl contexts
+  debug:
+    var: kubectl_contexts.stdout
+
+- name: Ensure kubectl is authenticated
+  shell: |
+    export KUBECONFIG=/home/minikubeuser/.kube/config
+    kubectl config use-context minikube
+  args:
+    executable: /bin/bash
+
+- name: Apply Next.js Deployment manifest
+  k8s:
+    kubeconfig: /home/minikubeuser/.kube/config
+    state: present
+    definition: "{{ lookup('file', 'files/nextjs-deployment.yml') }}"
+  environment:
+    KUBECONFIG: /home/minikubeuser/.kube/config
+
+- name: Apply Next.js Deployment manifest
+  k8s:
+    kubeconfig: /home/minikubeuser/.kube/config
+    state: present
+    definition: "{{ lookup('file', 'files/nextjs-deployment.yml') }}"
+- name: Apply Next.js Service manifest
+  k8s:
+    kubeconfig: /home/minikubeuser/.kube/config
+    namespace: default  # Update namespace if needed
+    state: present
+    definition: "{{ lookup('file', 'files/nextjs-service.yml') }}"
