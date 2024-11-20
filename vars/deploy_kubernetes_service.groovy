@@ -14,6 +14,6 @@ def call(String appName) {
 
     // Run the Ansible playbook with corrected paths
     sh """
-        ansible-playbook -i /home/jenkins/.jenkins/jobs/jenkins-ansible-v1/workspace/inventory.ini /home/jenkins/.jenkins/jobs/jenkins-ansible-v1/workspace/deploy-playbook-with-sh-v2.yml -e "app_name=${appName}"
+        ansible-playbook -i /home/jenkins/.jenkins/jobs/jenkins-ansible-v1/workspace/inventory.ini /home/jenkins/.jenkins/jobs/jenkins-ansible-v1/workspace/vars/deploy-playbook-with-sh-v2.yml -e "app_name=${appName}"
     """
 }
