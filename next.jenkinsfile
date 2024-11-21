@@ -1,4 +1,4 @@
-@Library('my-share-library-makara') _
+@Library('ansible-share') _
 
 pipeline {
     agent any
