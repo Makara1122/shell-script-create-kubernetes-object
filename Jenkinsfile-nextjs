@@ -1,0 +1,16 @@
+@Library('my-share-library-makara') _
+
+pipeline {
+    agent any
+    stages {
+        stage('Detect Project Type') {
+            steps {
+                script {
+                    def repoUrl = 'https://github.com/Makara1122/jenkin-next.git'
+                    def projectType = detectProjectType(repoUrl)
+                    echo "The project type is: ${projectType}"
+                }
+            }
+        }
+    }
+}
