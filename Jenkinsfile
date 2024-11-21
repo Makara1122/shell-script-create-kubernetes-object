@@ -8,7 +8,7 @@ pipeline {
             steps {
                 script {
                     // Call the shared library function with the app name as parameter
-                    deploy_kubernetes_service('makara-nextjs-78')
+                    deploy_kubernetes_service('makara-nextjs-la')
                 }
             }
         }
