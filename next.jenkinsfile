@@ -1,4 +1,4 @@
-@Library('ansible-share') _
+@Library('ansible-library') _
 
 pipeline {
     agent any
