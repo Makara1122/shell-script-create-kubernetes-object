@@ -1,4 +1,4 @@
-def detectProjectType(String repoUrl) {
+def call(String repoUrl) {
     // Clone the repo temporarily
     def repoName = repoUrl.tokenize("/").last().replace(".git", "")
     def tempDir = "/tmp/${repoName}"
