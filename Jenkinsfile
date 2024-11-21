@@ -21,7 +21,7 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'APP_NAME', defaultValue: 'makara-nextjs-la', description: 'Name of the Kubernetes service to deploy')
+        string(name: 'APP_NAME', defaultValue: 'env-nextjs', description: 'Name of the Kubernetes service to deploy')
     }
 
     stages {
