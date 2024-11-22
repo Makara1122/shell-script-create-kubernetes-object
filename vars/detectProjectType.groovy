@@ -197,7 +197,25 @@ def dockerfileExists(String projectPath) {
 /**
  * Detects the project type by analyzing repository content.
  */
-def detectProjectTypeFromGithub(String repoUrl) {
+// def detectProjectTypeFromGithub(String repoUrl) {
+//     def repoName = repoUrl.tokenize("/").last().replace(".git", "")
+//     def tempDir = "/tmp/${repoName}"
+
+//     try {
+//         sh "rm -rf ${tempDir}"
+//         sh "git clone ${repoUrl} ${tempDir}"
+
+//         def projectType = detectProjectType(tempDir)
+//         sh "rm -rf ${tempDir}"
+
+//         return projectType
+//     } catch (Exception e) {
+//         sh "rm -rf ${tempDir}"
+//         error "Failed to detect project type: ${e.message}"
+//     }
+// }
+
+def detectProjectTypeFromGithub(String repoUrl, boolean cleanUp = true) {
     def repoName = repoUrl.tokenize("/").last().replace(".git", "")
     def tempDir = "/tmp/${repoName}"
 
@@ -206,7 +224,10 @@ def detectProjectTypeFromGithub(String repoUrl) {
         sh "git clone ${repoUrl} ${tempDir}"
 
         def projectType = detectProjectType(tempDir)
-        sh "rm -rf ${tempDir}"
+
+        if (cleanUp) {
+            sh "rm -rf ${tempDir}"
+        }
 
         return projectType
     } catch (Exception e) {
@@ -214,6 +235,7 @@ def detectProjectTypeFromGithub(String repoUrl) {
         error "Failed to detect project type: ${e.message}"
     }
 }
+
 
 def detectProjectType(String projectPath) {
     if (fileExists("${projectPath}/package.json")) {
