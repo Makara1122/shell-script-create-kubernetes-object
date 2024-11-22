@@ -320,6 +320,26 @@ def detectPackageManager(String projectPath) {
 /**
  * Writes a Dockerfile based on the detected project type and package manager.
  */
+// def writeDockerfile(String projectType, String projectPath, String packageManager) {
+//     try {
+//         // Update: Use the Jenkins workspace to write the Dockerfile
+//         def dockerfileContent = libraryResource "dockerfileTemplates/Dockerfile-${projectType}"
+//         dockerfileContent = dockerfileContent.replaceAll("\\{\\{packageManager\\}\\}", packageManager)
+
+//         // Write the Dockerfile to the workspace directory
+//         def workspaceDockerfilePath = "${env.WORKSPACE}/${projectPath}/Dockerfile"
+//         writeFile file: workspaceDockerfilePath, text: dockerfileContent
+
+//         echo "Dockerfile successfully written for ${projectType} project at ${workspaceDockerfilePath}"
+//     } catch (Exception e) {
+//         error "Failed to write Dockerfile for ${projectType} project: ${e.message}"
+//     }
+// }
+
+
+/**
+ * Writes a Dockerfile based on the detected project type and package manager.
+ */
 def writeDockerfile(String projectType, String projectPath, String packageManager) {
     try {
         // Update: Use the Jenkins workspace to write the Dockerfile
@@ -327,7 +347,7 @@ def writeDockerfile(String projectType, String projectPath, String packageManage
         dockerfileContent = dockerfileContent.replaceAll("\\{\\{packageManager\\}\\}", packageManager)
 
         // Write the Dockerfile to the workspace directory
-        def workspaceDockerfilePath = "${env.WORKSPACE}/${projectPath}/Dockerfile"
+        def workspaceDockerfilePath = "${env.WORKSPACE}/${projectPath}/Dockerfile"  // Corrected path
         writeFile file: workspaceDockerfilePath, text: dockerfileContent
 
         echo "Dockerfile successfully written for ${projectType} project at ${workspaceDockerfilePath}"
@@ -335,6 +355,7 @@ def writeDockerfile(String projectType, String projectPath, String packageManage
         error "Failed to write Dockerfile for ${projectType} project: ${e.message}"
     }
 }
+
 
 // Old method for pushing Docker images (commented out to focus on updates)
 // def pushDockerImage(String dockerImageName, String dockerImageTag, String credentialsId) {
