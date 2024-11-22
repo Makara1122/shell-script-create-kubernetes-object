@@ -303,3 +303,39 @@ def pushDockerImage(String dockerImageName, String dockerImageTag, String creden
         error "Failed to push Docker image: ${e.message}"
     }
 }
+
+def buildAndPushDockerImage(String dockerImageName, String dockerImageTag, String credentialsId, String dockerfilePath = '.') {
+    try {
+        // Stage 1: Build the Docker image
+        echo "Building Docker image: ${dockerImageName}:${dockerImageTag}"
+        sh """
+        docker build -t ${dockerImageName}:${dockerImageTag} ${dockerfilePath}
+        """
+
+        // Stage 2: Log in to Docker registry
+        echo "Logging in to Docker registry"
+        withCredentials([usernamePassword(credentialsId: credentialsId, passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+            sh """
+            docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+            """
+        }
+
+        // Stage 3: Tag the Docker image
+        echo "Tagging Docker image"
+        def dockerHubRepo = "${DOCKER_USER}/${dockerImageName}:${dockerImageTag}"
+        sh """
+        docker tag ${dockerImageName}:${dockerImageTag} ${dockerHubRepo}
+        """
+
+        // Stage 4: Push the Docker image to the registry
+        echo "Pushing Docker image to registry: ${dockerHubRepo}"
+        sh """
+        docker push ${dockerHubRepo}
+        """
+
+        echo "Docker image ${dockerHubRepo} successfully pushed."
+    } catch (Exception e) {
+        error "Failed to build and push Docker image: ${e.message}"
+    }
+}
+
