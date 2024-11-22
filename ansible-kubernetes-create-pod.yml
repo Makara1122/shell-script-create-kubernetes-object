@@ -29,4 +29,8 @@
         image_name: "{{ image_name }}"
       args:
         chdir: "/home/minikubeuser"
+   - name: Debug app_name and image_name
+     debug:
+       msg: "app_name: {{ app_name }}, image_name: {{ image_name }}"
+
 
