@@ -27,3 +27,6 @@
       environment:
         app_name: "{{ app_name }}"
         image_name: "{{ image_name }}"
+      args:
+        chdir: "/home/minikubeuser"
+
