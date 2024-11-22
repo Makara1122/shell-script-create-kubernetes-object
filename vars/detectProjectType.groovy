@@ -215,73 +215,73 @@ def dockerfileExists(String projectPath) {
 //     }
 // }
 
-// def detectProjectTypeFromGithub(String repoUrl, boolean cleanUp = true) {
-//     def repoName = repoUrl.tokenize("/").last().replace(".git", "")
-//     def tempDir = "/tmp/${repoName}"
+def detectProjectTypeFromGithub(String repoUrl, boolean cleanUp = true) {
+    def repoName = repoUrl.tokenize("/").last().replace(".git", "")
+    def tempDir = "/tmp/${repoName}"
 
-//     try {
-//         sh "rm -rf ${tempDir}"
-//         sh "git clone ${repoUrl} ${tempDir}"
+    try {
+        sh "rm -rf ${tempDir}"
+        sh "git clone ${repoUrl} ${tempDir}"
 
-//         def projectType = detectProjectType(tempDir)
+        def projectType = detectProjectType(tempDir)
 
-//         if (cleanUp) {
-//             sh "rm -rf ${tempDir}"
-//         }
+        if (cleanUp) {
+            sh "rm -rf ${tempDir}"
+        }
 
-//         return projectType
-//     } catch (Exception e) {
-//         sh "rm -rf ${tempDir}"
-//         error "Failed to detect project type: ${e.message}"
-//     }
-// }
+        return projectType
+    } catch (Exception e) {
+        sh "rm -rf ${tempDir}"
+        error "Failed to detect project type: ${e.message}"
+    }
+}
 
 
-// def detectProjectType(String projectPath) {
-//     if (fileExists("${projectPath}/package.json")) {
-//         def packageJson = readJSON file: "${projectPath}/package.json"
-//         if (packageJson.dependencies?.'next') {
-//             return 'nextjs'
-//         } else if (packageJson.dependencies?.'react') {
-//             return 'react'
-//         }
-//     } else if (fileExists("${projectPath}/pom.xml")) {
-//         return 'springboot-maven'
-//     } else if (fileExists("${projectPath}/build.gradle")) {
-//         return 'springboot-gradle'
-//     } else if (fileExists("${projectPath}/pubspec.yaml")) {
-//         return 'flutter'
-//     }
+def detectProjectType(String projectPath) {
+    if (fileExists("${projectPath}/package.json")) {
+        def packageJson = readJSON file: "${projectPath}/package.json"
+        if (packageJson.dependencies?.'next') {
+            return 'nextjs'
+        } else if (packageJson.dependencies?.'react') {
+            return 'react'
+        }
+    } else if (fileExists("${projectPath}/pom.xml")) {
+        return 'springboot-maven'
+    } else if (fileExists("${projectPath}/build.gradle")) {
+        return 'springboot-gradle'
+    } else if (fileExists("${projectPath}/pubspec.yaml")) {
+        return 'flutter'
+    }
 
-//     return null
-// }
+    return null
+}
 
-// def detectPackageManager(String projectPath) {
-//     if (fileExists("${projectPath}/package-lock.json")) {
-//         return 'npm'
-//     } else if (fileExists("${projectPath}/yarn.lock")) {
-//         return 'yarn'
-//     } else if (fileExists("${projectPath}/pnpm-lock.yaml")) {
-//         return 'pnpm'
-//     } else if (fileExists("${projectPath}/bun.lockb")) {
-//         return 'bun'
-//     }
-//     return 'npm'
-// }
+def detectPackageManager(String projectPath) {
+    if (fileExists("${projectPath}/package-lock.json")) {
+        return 'npm'
+    } else if (fileExists("${projectPath}/yarn.lock")) {
+        return 'yarn'
+    } else if (fileExists("${projectPath}/pnpm-lock.yaml")) {
+        return 'pnpm'
+    } else if (fileExists("${projectPath}/bun.lockb")) {
+        return 'bun'
+    }
+    return 'npm'
+}
 
-// /**
-//  * Writes a Dockerfile based on the detected project type and package manager.
-//  */
-// def writeDockerfile(String projectType, String projectPath, String packageManager) {
-//     try {
-//         def dockerfileContent = libraryResource "dockerfileTemplates/Dockerfile-${projectType}"
-//         dockerfileContent = dockerfileContent.replaceAll("\\{\\{packageManager\\}\\}", packageManager)
-//         writeFile file: "${projectPath}/Dockerfile", text: dockerfileContent
-//         echo "Dockerfile successfully written for ${projectType} project at ${projectPath}/Dockerfile"
-//     } catch (Exception e) {
-//         error "Failed to write Dockerfile for ${projectType} project: ${e.message}"
-//     }
-// }
+/**
+ * Writes a Dockerfile based on the detected project type and package manager.
+ */
+def writeDockerfile(String projectType, String projectPath, String packageManager) {
+    try {
+        def dockerfileContent = libraryResource "dockerfileTemplates/Dockerfile-${projectType}"
+        dockerfileContent = dockerfileContent.replaceAll("\\{\\{packageManager\\}\\}", packageManager)
+        writeFile file: "${projectPath}/Dockerfile", text: dockerfileContent
+        echo "Dockerfile successfully written for ${projectType} project at ${projectPath}/Dockerfile"
+    } catch (Exception e) {
+        error "Failed to write Dockerfile for ${projectType} project: ${e.message}"
+    }
+}
 
 // /**
 //  * Pushes a Docker image to Docker Hub.
