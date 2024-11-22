@@ -7,6 +7,17 @@
 #       environment:
 #         app_name: "makara-nextjs-78"
 
+# ---
+# - name: Deploy Kubernetes resources with arguments
+#   hosts: myhosts
+#   tasks:
+#     - name: Run deploy-pod.sh with application name and image name parameters
+#       shell: "/home/minikubeuser/deploy-pod.sh {{ app_name }} {{ image_name }}"
+#       environment:
+#         app_name: "{{ app_name }}"
+#         image_name: "{{ image_name }}"
+
+
 ---
 - name: Deploy Kubernetes resources with arguments
   hosts: myhosts
