@@ -1,0 +1,110 @@
+
+
+@Library('my-share-library-makara') _
+
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_REGISTRY = 'docker.io'       // Docker Hub, replace if using another registry
+        DOCKER_REPO = 'sovanra'             // Your Docker repository name
+        IMAGE_NAME = 'test-build'           // Name for your Docker image
+        TAG = 'latest'                      // Tag for the image
+        DOCKER_USERNAME = 'sovanra'         // Docker username
+        DOCKER_PASSWORD = 'Qwerty@123'      // Docker password
+    }
+
+    parameters {
+        string(name: 'APP_NAME', defaultValue: 'env-nextjs', description: 'Name of the Kubernetes service to deploy')
+    }
+
+    stages {
+        stage('Detect Project Type') {
+            steps {
+                script {
+                    def repoUrl = 'https://github.com/Makara1122/jenkin-next.git'
+                    def projectType = detectProjectType(repoUrl)
+                    echo "The project type is: ${projectType}"
+                }
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                script {
+                    def repoDir = "${env.WORKSPACE}/jenkin-next"
+                    if (fileExists(repoDir)) {
+                        echo "Directory exists. Removing it before cloning."
+                        sh "rm -rf ${repoDir}"
+                    }
+
+                    echo "Cloning repository: https://github.com/Makara1122/jenkin-next.git from branch: main"
+                    git branch: 'main', url: 'https://github.com/Makara1122/jenkin-next.git'
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    echo "Listing files and folders in the workspace:"
+                    sh "ls -R ${env.WORKSPACE}"
+
+                    def dockerFilePath = "${env.WORKSPACE}/Dockerfile"
+                    echo "Checking Dockerfile existence at: ${dockerFilePath}"
+
+                    if (!fileExists(dockerFilePath)) {
+                        error "Dockerfile not found at ${dockerFilePath}"
+                    }
+
+                    echo "Building Docker image from Dockerfile: ${dockerFilePath}"
+                    def image = docker.build("${DOCKER_REPO}/${IMAGE_NAME}:${TAG}", "-f ${dockerFilePath} ${env.WORKSPACE}/")
+                    echo "Docker image built: ${DOCKER_REPO}/${IMAGE_NAME}:${TAG}"
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    echo "Logging into Docker registry"
+                    sh "docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}"
+
+                    echo "Pushing Docker image: ${DOCKER_REPO}/${IMAGE_NAME}:${TAG}"
+                    sh "docker push ${DOCKER_REPO}/${IMAGE_NAME}:${TAG}"
+                }
+            }
+        }
+
+        stage('Deploy Service') {
+            steps {
+                script {
+                    echo "Preparing to deploy service with the following parameters:"
+                    echo "APP_NAME: ${params.APP_NAME}"
+                    echo "IMAGE_NAME: ${DOCKER_REPO}/${IMAGE_NAME}:${TAG}"
+
+                    deploy_kubernetes_service(params.APP_NAME, "${DOCKER_REPO}/${IMAGE_NAME}:${TAG}")
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Cleaning up Docker images"
+            sh "docker rmi ${DOCKER_REPO}/${IMAGE_NAME}:${TAG} || true"
+        }
+    }
+}
+
+// Shared Library: Deploy Kubernetes Service
+def deploy_kubernetes_service(appName, imageName) {
+    echo "Deploying Kubernetes service with parameters:"
+    echo "APP_NAME: ${appName}"
+    echo "IMAGE_NAME: ${imageName}"
+
+    sh """
+    ansible-playbook -i /home/jenkins/.jenkins/jobs/jenkins-ansible-v1/workspace/inventory.ini /home/jenkins/.jenkins/jobs/jenkins-ansible-v1/workspace/vars/deploy-playbook-with-sh-v2.yml \
+        -e "app_name=${appName}" -e "image_name=${imageName}"
+    """
+}
