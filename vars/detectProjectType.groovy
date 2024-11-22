@@ -1,10 +1,53 @@
+def call(String repoUrl) {
+    try {
+        def projectType = detectProjectTypeFromGithub(repoUrl)
+
+        if (projectType) {
+            echo "Detected project type: ${projectType}"
+
+            def projectPath = "/tmp/${repoUrl.tokenize('/').last().replace('.git', '')}"
+
+            if (!dockerfileExists(projectPath)) {
+                def packageManager = detectPackageManager(projectPath)
+                writeDockerfile(projectType, projectPath, packageManager)
+            } else {
+                echo "Dockerfile already exists at ${projectPath}/Dockerfile, skipping generation."
+            }
+
+            return projectType
+        } else {
+            error "Unable to detect the project type for repository: ${repoUrl}."
+        }
+    } catch (Exception e) {
+        error "Pipeline failed: ${e.message}"
+    }
+}
+
+def dockerfileExists(String projectPath) {
+    return fileExists("${projectPath}/Dockerfile")
+}
+
 /**
- * Detects the project type from a GitHub repository.
- * Clones the repository, analyzes its structure, and determines the project type.
- * @param repoUrl The GitHub repository URL.
- * @param cleanUp Whether to clean up non-Docker files after detection.
- * @return The detected project type.
+ * Detects the project type by analyzing repository content.
  */
+// def detectProjectTypeFromGithub(String repoUrl) {
+//     def repoName = repoUrl.tokenize("/").last().replace(".git", "")
+//     def tempDir = "/tmp/${repoName}"
+
+//     try {
+//         sh "rm -rf ${tempDir}"
+//         sh "git clone ${repoUrl} ${tempDir}"
+
+//         def projectType = detectProjectType(tempDir)
+//         sh "rm -rf ${tempDir}"
+
+//         return projectType
+//     } catch (Exception e) {
+//         sh "rm -rf ${tempDir}"
+//         error "Failed to detect project type: ${e.message}"
+//     }
+// }
+
 def detectProjectTypeFromGithub(String repoUrl, boolean cleanUp = true) {
     def repoName = repoUrl.tokenize("/").last().replace(".git", "")
     def tempDir = "/tmp/${repoName}"
@@ -16,7 +59,7 @@ def detectProjectTypeFromGithub(String repoUrl, boolean cleanUp = true) {
         def projectType = detectProjectType(tempDir)
 
         if (cleanUp) {
-            sh "find ${tempDir} -mindepth 1 ! -name Dockerfile -exec rm -rf {} +"
+            sh "rm -rf ${tempDir}"
         }
 
         return projectType
@@ -26,11 +69,7 @@ def detectProjectTypeFromGithub(String repoUrl, boolean cleanUp = true) {
     }
 }
 
-/**
- * Detects the type of project based on its directory structure.
- * @param projectPath The local path to the project.
- * @return The detected project type or null if undetectable.
- */
+
 def detectProjectType(String projectPath) {
     if (fileExists("${projectPath}/package.json")) {
         def packageJson = readJSON file: "${projectPath}/package.json"
@@ -46,14 +85,10 @@ def detectProjectType(String projectPath) {
     } else if (fileExists("${projectPath}/pubspec.yaml")) {
         return 'flutter'
     }
+
     return null
 }
 
-/**
- * Detects the package manager for the project.
- * @param projectPath The local path to the project.
- * @return The detected package manager.
- */
 def detectPackageManager(String projectPath) {
     if (fileExists("${projectPath}/package-lock.json")) {
         return 'npm'
@@ -68,10 +103,7 @@ def detectPackageManager(String projectPath) {
 }
 
 /**
- * Writes a Dockerfile for the detected project type.
- * @param projectType The detected project type.
- * @param projectPath The local path to the project.
- * @param packageManager The package manager to use.
+ * Writes a Dockerfile based on the detected project type and package manager.
  */
 def writeDockerfile(String projectType, String projectPath, String packageManager) {
     try {
@@ -84,12 +116,63 @@ def writeDockerfile(String projectType, String projectPath, String packageManage
     }
 }
 
-/**
- * Pushes a Docker image to Docker Hub.
- * @param dockerImageName The name of the Docker image.
- * @param dockerImageTag The tag for the Docker image.
- * @param credentialsId The Jenkins credentials ID for Docker Hub.
- */
+// /**
+//  * Pushes a Docker image to Docker Hub.
+//  */
+// def pushDockerImage(String dockerImageName, String dockerImageTag, String credentialsId) {
+//     try {
+//         withCredentials([usernamePassword(credentialsId: credentialsId, passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+//             def dockerHubRepo = "${DOCKER_USER}/${dockerImageName}:${dockerImageTag}"
+
+//             sh """
+//             docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+//             docker tag ${dockerImageName}:${dockerImageTag} ${dockerHubRepo}
+//             docker push ${dockerHubRepo}
+//             """
+
+//             echo "Image pushed to Docker Hub: ${dockerHubRepo}"
+//         }
+//     } catch (Exception e) {
+//         error "Failed to push Docker image: ${e.message}"
+//     }
+// }
+
+// def buildAndPushDockerImage(String dockerImageName, String dockerImageTag, String credentialsId, String dockerfilePath = '.') {
+//     try {
+//         // Stage 1: Build the Docker image
+//         echo "Building Docker image: ${dockerImageName}:${dockerImageTag}"
+//         sh """
+//         docker build -t ${dockerImageName}:${dockerImageTag} ${dockerfilePath}
+//         """
+
+//         // Stage 2: Log in to Docker registry
+//         echo "Logging in to Docker registry"
+//         withCredentials([usernamePassword(credentialsId: credentialsId, passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+//             sh """
+//             docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+//             """
+//         }
+
+//         // Stage 3: Tag the Docker image
+//         echo "Tagging Docker image"
+//         def dockerHubRepo = "${DOCKER_USER}/${dockerImageName}:${dockerImageTag}"
+//         sh """
+//         docker tag ${dockerImageName}:${dockerImageTag} ${dockerHubRepo}
+//         """
+
+//         // Stage 4: Push the Docker image to the registry
+//         echo "Pushing Docker image to registry: ${dockerHubRepo}"
+//         sh """
+//         docker push ${dockerHubRepo}
+//         """
+
+//         echo "Docker image ${dockerHubRepo} successfully pushed."
+//     } catch (Exception e) {
+//         error "Failed to build and push Docker image: ${e.message}"
+//     }
+// }
+
+
 def pushDockerImage(String dockerImageName, String dockerImageTag, String credentialsId) {
     try {
         withCredentials([usernamePassword(credentialsId: credentialsId, passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
@@ -110,20 +193,15 @@ def pushDockerImage(String dockerImageName, String dockerImageTag, String creden
     }
 }
 
-/**
- * Builds and pushes a Docker image to a registry.
- * @param dockerImageName The name of the Docker image.
- * @param dockerImageTag The tag for the Docker image.
- * @param credentialsId The Jenkins credentials ID for Docker Hub.
- * @param dockerfilePath The path to the Dockerfile (default: current directory).
- */
 def buildAndPushDockerImage(String dockerImageName, String dockerImageTag, String credentialsId, String dockerfilePath = '.') {
     try {
+        // Stage 1: Build the Docker image
         echo "Building Docker image: ${dockerImageName}:${dockerImageTag}"
         sh """
         docker build -t ${dockerImageName}:${dockerImageTag} ${dockerfilePath} || exit 1
         """
 
+        // Stage 2: Log in to Docker registry
         echo "Logging in to Docker registry"
         withCredentials([usernamePassword(credentialsId: credentialsId, passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
             sh """
@@ -131,12 +209,14 @@ def buildAndPushDockerImage(String dockerImageName, String dockerImageTag, Strin
             """
         }
 
+        // Stage 3: Tag the Docker image
         echo "Tagging Docker image"
         def dockerHubRepo = "${DOCKER_USER}/${dockerImageName}:${dockerImageTag}"
         sh """
         docker tag ${dockerImageName}:${dockerImageTag} ${dockerHubRepo} || exit 1
         """
 
+        // Stage 4: Push the Docker image to the registry
         echo "Pushing Docker image to registry: ${dockerHubRepo}"
         sh """
         docker push ${dockerHubRepo} || exit 1
