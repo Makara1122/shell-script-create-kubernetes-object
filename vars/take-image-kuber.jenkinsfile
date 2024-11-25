@@ -32,12 +32,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 script {
-                    def repoDir = "${env.WORKSPACE}/jenkin-next"
-                    if (fileExists(repoDir)) {
-                        echo "Directory exists. Removing it before cloning."
-                        sh "rm -rf ${repoDir}"
-                    }
-
+                    
                     echo "Cloning repository: https://github.com/Makara1122/jenkin-next.git from branch: main"
                     git branch: 'main', url: 'https://github.com/Makara1122/jenkin-next.git'
                 }
