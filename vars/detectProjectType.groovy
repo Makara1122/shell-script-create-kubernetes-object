@@ -349,7 +349,7 @@ def writeDockerfile(String projectType, String projectPath, String packageManage
         dockerfileContent = dockerfileContent.replaceAll("\\{\\{packageManager\\}\\}", packageManager)
 
         // Define the full path where the Dockerfile will be written
-        def dockerfilePath = "${env.WORKSPACE}/${projectPath}/Dockerfile"
+        def dockerfilePath = "${env.WORKSPACE}/Dockerfile"
 
         // Write the content to the Dockerfile
         writeFile file: dockerfilePath, text: dockerfileContent
