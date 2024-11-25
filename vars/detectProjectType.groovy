@@ -383,25 +383,43 @@ def writeDockerfile(String projectType, String projectPath, String packageManage
 //     }
 // }
 
-def pushDockerImage(String dockerImageName, String dockerImageTag, String credentialsId) {
+def buildAndPushDockerImage(String dockerImageName, String dockerImageTag, String credentialsId, String projectPath) {
     try {
-        withCredentials([usernamePassword(credentialsId: credentialsId, passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
-            def dockerHubRepo = "${DOCKER_USER}/${dockerImageName}:${dockerImageTag}"
+        // Stage 1: Build the Docker image
+        echo "Building Docker image: ${dockerImageName}:${dockerImageTag} from path: ${env.WORKSPACE}/${projectPath}/Dockerfile"
+        sh """
+        docker build -t ${dockerImageName}:${dockerImageTag} -f ${env.WORKSPACE}/${projectPath}/Dockerfile ${env.WORKSPACE}/${projectPath} || exit 1
+        """
 
+        // Stage 2: Log in to Docker registry
+        echo "Logging in to Docker registry"
+        withCredentials([usernamePassword(credentialsId: credentialsId, passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
             sh """
             docker login -u ${DOCKER_USER} -p ${DOCKER_PASS} || exit 1
-            docker tag ${dockerImageName}:${dockerImageTag} ${dockerHubRepo} || exit 1
-            docker push ${dockerHubRepo} || exit 1
             """
-
-            echo "Image pushed to Docker Hub: ${dockerHubRepo}"
         }
+
+        // Stage 3: Tag the Docker image
+        echo "Tagging Docker image"
+        def dockerHubRepo = "${DOCKER_USER}/${dockerImageName}:${dockerImageTag}"
+        sh """
+        docker tag ${dockerImageName}:${dockerImageTag} ${dockerHubRepo} || exit 1
+        """
+
+        // Stage 4: Push the Docker image to the registry
+        echo "Pushing Docker image to registry: ${dockerHubRepo}"
+        sh """
+        docker push ${dockerHubRepo} || exit 1
+        """
+
+        echo "Docker image ${dockerHubRepo} successfully pushed."
     } catch (Exception e) {
-        echo "Error during Docker push: ${e.message}"
+        echo "Error during Docker build and push: ${e.message}"
         currentBuild.result = 'FAILURE'
-        error "Failed to push Docker image: ${e.message}"
+        error "Failed to build and push Docker image: ${e.message}"
     }
 }
+
 
 def buildAndPushDockerImage(String dockerImageName, String dockerImageTag, String credentialsId, String dockerfilePath = '.') {
     try {
