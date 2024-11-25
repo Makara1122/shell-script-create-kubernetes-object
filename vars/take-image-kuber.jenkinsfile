@@ -49,7 +49,7 @@ pipeline {
                 script {
                     // Clean up any previous workspace and checkout the code
                     echo 'Cloning repository... of share library'
-                    git url: https://github.com/Makara1122/shell-script-create-kubernetes-object.git, branch: 'main'
+                    git url: 'https://github.com/Makara1122/shell-script-create-kubernetes-object.git', branch: 'main'
                 }
             }
         }
