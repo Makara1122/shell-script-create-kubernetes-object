@@ -29,25 +29,22 @@ pipeline {
             }
         }
 
-        stage('Checkout') {
-            steps {
-                script {
-                    
-                    echo "Cloning repository: https://github.com/Makara1122/jenkin-next.git from branch: main"
-                    git branch: 'main', url: 'https://github.com/Makara1122/jenkin-next.git'
-                }
-            }
+stage('Checkout Main Project') {
+    steps {
+        dir('main-project') { // Specify a subdirectory
+            git branch: 'main', url: 'https://github.com/Makara1122/jenkin-next.git'
         }
+    }
+}
 
-        stage('Checkout share library ') {
-            steps {
-                script {
-                    // Clean up any previous workspace and checkout the code
-                    echo 'Cloning repository... of share library'
-                    git url: 'https://github.com/Makara1122/shell-script-create-kubernetes-object.git', branch: 'main'
-                }
-            }
+stage('Checkout Shared Library') {
+    steps {
+        dir('shared-library') { // Another subdirectory
+            git branch: 'main', url: 'https://github.com/Makara1122/shell-script-create-kubernetes-object.git'
         }
+    }
+}
+
 
         stage('Build Docker Image') {
             steps {
