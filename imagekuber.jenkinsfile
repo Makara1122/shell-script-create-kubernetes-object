@@ -64,7 +64,7 @@ pipeline {
                     }
 
                     echo "Building Docker image from Dockerfile: ${dockerFilePath}"
-                    def image = docker.build("${DOCKER_REPO}/${IMAGE_NAME}:${TAG}", "-f ${dockerFilePath} ${env.WORKSPACE}/")
+                    def image = docker.build("${DOCKER_REPO}/${IMAGE_NAME}:${TAG}", "-f ${env.WORKSPACE}/")
                     echo "Docker image built: ${DOCKER_REPO}/${IMAGE_NAME}:${TAG}"
                 }
             }
