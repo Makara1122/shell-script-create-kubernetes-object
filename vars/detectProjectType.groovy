@@ -349,13 +349,13 @@ def writeDockerfile(String projectType, String projectPath, String packageManage
         dockerfileContent = dockerfileContent.replaceAll("\\{\\{packageManager\\}\\}", packageManager)
 
         // Define the full path where the Dockerfile will be written
-        def dockerfilePath = "${env.WORKSPACE}/${projectPath}/Dockerfile"
+        def dockerfilePath = "Dockerfile"
 
         // Write the content to the Dockerfile
         writeFile file: dockerfilePath, text: dockerfileContent
 
         // Log success message
-        echo "Dockerfile successfully written for ${projectType} project at ${dockerfilePath}"
+        echo "Dockerfile successfully written to workspace correctly"
     } catch (Exception e) {
         // Handle any errors during Dockerfile creation
         error "Failed to write Dockerfile for ${projectType} project: ${e.message}"
