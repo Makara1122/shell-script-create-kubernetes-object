@@ -426,7 +426,7 @@ def buildAndPushDockerImage(String dockerImageName, String dockerImageTag, Strin
         // Stage 1: Build the Docker image
         echo "Building Docker image: ${dockerImageName}:${dockerImageTag}"
         sh """
-        docker build -t ${dockerImageName}:${dockerImageTag} -f ${env.WORKSPACE}/${projectPath}/Dockerfile || exit 1
+        docker build -t ${dockerImageName}:${dockerImageTag} . || exit 1
         """
 
         // Stage 2: Log in to Docker registry
