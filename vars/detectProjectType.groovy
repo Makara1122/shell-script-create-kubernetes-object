@@ -342,19 +342,26 @@ def detectPackageManager(String projectPath) {
  */
 def writeDockerfile(String projectType, String projectPath, String packageManager) {
     try {
-        // Update: Use the Jenkins workspace to write the Dockerfile
+        // Load the appropriate Dockerfile template from the Jenkins library
         def dockerfileContent = libraryResource "dockerfileTemplates/Dockerfile-${projectType}"
+        
+        // Replace the placeholder for the package manager
         dockerfileContent = dockerfileContent.replaceAll("\\{\\{packageManager\\}\\}", packageManager)
 
-        // Write the Dockerfile to the workspace directory
-        def workspaceDockerfilePath = "${env.WORKSPACE}/Dockerfile"  // Corrected path
-        writeFile file: workspaceDockerfilePath, text: dockerfileContent
+        // Define the full path where the Dockerfile will be written
+        def dockerfilePath = "${env.WORKSPACE}/${projectPath}/Dockerfile"
 
-        echo "Dockerfile successfully written for ${projectType} project at ${workspaceDockerfilePath}"
+        // Write the content to the Dockerfile
+        writeFile file: dockerfilePath, text: dockerfileContent
+
+        // Log success message
+        echo "Dockerfile successfully written for ${projectType} project at ${dockerfilePath}"
     } catch (Exception e) {
+        // Handle any errors during Dockerfile creation
         error "Failed to write Dockerfile for ${projectType} project: ${e.message}"
     }
 }
+
 
 
 // Old method for pushing Docker images (commented out to focus on updates)
